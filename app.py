@@ -38,9 +38,10 @@ __data_atualizacao__ = "16/08/2021"
 
 from inspect import stack
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
+from blacklist import BLACKLIST
 
 from resources.hotel import Hoteis, Hotel
 from resources.usuario import User, UserRegister, UserLogin
@@ -53,7 +54,12 @@ app = Flask(__name__)
 # INICIANDO AS CONFIGURAÇÕES DO BANCO DE DADOS (USANDO SQLALCHEMY)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///banco.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# INICIANDO AS CONFIGURAÇÕES DA AUTENTICAÇÃO (USANDO JWT)
 app.config['JWT_SECRET_KEY'] = 'DontTellAnyone'
+
+# INICIANDO AS CONFIGURAÇÕES DA BLACKLIST (TOKENS REVOGADOS) (USANDO JWT)
+app.config['JWT_BLACKLIST_ENABLED'] = True
 
 # INICIANDO A APLICAÇÃO FLASK
 api = Api(app)
@@ -84,6 +90,55 @@ def cria_banco():
         banco.create_all()
     except Exception as ex:
         print("ERRO NA FUNÇÃO: {} - {}".format(stack[0][3], ex))
+
+
+@jwt.token_in_blacklist_loader
+def verifica_blacklist(token):
+
+    """
+
+        DECORADOR USADO PARA DEFINIR A FUNÇÃO DE RETORNO DE CHAMADA QUANDO UM
+        PONTO DE EXTREMIDADE PROTEGIDO É ACESSADO.
+
+        VERIFICA SE SEU TOKEN ESTÁ NA LISTA NEGRA OU NÃO.
+
+        USA A MEMÓRIA DA MÁQUINA PARA SALVAR TOKENS NA LISTA NEGRA.
+
+        # Arguments
+            token               - Required : Token enviado pelo usuário (String)
+
+        # Returns
+            validador           - Required : Validador se o token
+                                             consta na blacklist (Boolean)
+
+    """
+
+    try:
+        return token['jti'] in BLACKLIST
+    except Exception as ex:
+        return False
+
+
+@jwt.revoked_token_loader
+def token_de_acesso_invalidado():
+
+    """
+
+        DECORADOR USADO PARA DEFINIR A FUNÇÃO DE RETORNO DE CHAMADA QUANDO UM
+        PONTO DE EXTREMIDADE PROTEGIDO É ACESSADO POR UM TOKEN INVÁLIDO.
+
+        O TOKEN PODE ESTAR REVOGADO (JÁ NA BLACKLIST) OU SER INVÁLIDO.
+
+        # Arguments
+
+        # Returns
+            json_response       - Required : Contendo o response da requisição (Json)
+
+    """
+
+    return jsonify({'message': 'You have been logged out.'}), 401 # unauthorized
+
+
 
 # ADICIONANDO AS VIEWS
 api.add_resource(Hoteis, '/hoteis')
