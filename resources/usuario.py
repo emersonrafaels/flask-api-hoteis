@@ -29,8 +29,9 @@ __data_atualizacao__ = "16/08/2021"
 
 
 from flask_restful import Resource, reqparse
-from flask_jwt_extended import create_access_token, jwt_required
+from flask_jwt_extended import create_access_token, jwt_required, get_raw_jwt
 from werkzeug.security import safe_str_cmp
+from blacklist import BLACKLIST
 
 from models.usuario import UserModel
 
@@ -222,6 +223,24 @@ class UserLogin(Resource):
     @classmethod
     def post(cls):
 
+        """
+
+            FUNÇÃO POST PARA LOGAR UM USUÁRIO.
+            USO DE SQLALCHEMY PARA BANCO DE DADOS E JWT PARA AUTENTICAÇÃO.
+
+            AO FAZER LOGIN, UM TOKEN JWT DE AUTENTICAÇÃO É CRIADO E RETORNADO PARA O CLIENT.
+            ESSE TOKEN DEVE SER ENVIADO PARA AS VIEWS ATRAVÉS DO HEADER AUTHORIZATION DE CADA
+            REQUISIÇÃO HTTP COM A FLAG BEARER.
+
+            # Arguments
+                user_id                 - Required : O ID do usuário desejado.
+                                                     É enviado via URL (Integer)
+
+            # Returns
+                json_response           - Required : Validador de execução da função (Json)
+
+        """
+
         # OBTENDO OS DADOS ENVIADOS POR JSON
         dados = atributos.parse_args()
 
@@ -244,6 +263,60 @@ class UserLogin(Resource):
             # CASO NÃO VÁLIDOS
             # UNAUTHORIZED
             return {'message': 'The username or password is incorrect.'}, 401
+        except:
+            # INTERNAL SERVER ERROR
+            return {"message": "An error ocurred trying to create hotel."}, 500
+
+
+class UserLogout(Resource):
+
+    """
+
+        UTILIZAÇÃO DO MICROFRAMEWORK FLASK PARA CRIAÇÃO DE UMA API DE HOTÉIS.
+        USO DE SQLALCHEMY PARA BANCO DE DADOS E JWT PARA AUTENTICAÇÃO.
+
+        CONTÉM AS FUNÇÕES PARA OS USUÁRIOS:
+
+        1) POST PARA REALIZAR LOGOUT.
+
+        AO FAZER LOGOUT, O TOKEN JWT DE AUTENTICAÇÃO É REVOGADO E COLOCADO NA BLACKLIST.
+
+        # Arguments
+            json_request            - Required : Contendo informações necessários na requisição (Json)
+
+        # Returns
+            json_response           - Required : Contendo o response da requisição (Json)
+
+    """
+
+
+    @jwt_required
+    def post(self):
+
+        """
+
+            FUNÇÃO POST PARA REALIZAR LOGOUT DO USUÁRIO.
+            USO DE SQLALCHEMY PARA BANCO DE DADOS E JWT PARA AUTENTICAÇÃO.
+
+            AO FAZER LOGOUT, O TOKEN JWT DE AUTENTICAÇÃO É REVOGADO E COLOCADO NA BLACKLIST.
+
+            # Arguments
+                user_id                 - Required : O ID do usuário desejado.
+                                                     É enviado via URL (Integer)
+
+            # Returns
+                json_response           - Required : Validador de execução da função (Json)
+
+        """
+
+        try:
+            # OBTENDO O JWT TOKEN IDENTIFIER DO USUÁRIO LOGADO
+            jwt_id = get_raw_jwt()['jti']
+
+            # ADICIONANDO O JTI NA BLACKLIST
+            BLACKLIST.add(jwt_id)
+
+            return {'message': 'Logged out successfully!'}, 200
         except:
             # INTERNAL SERVER ERROR
             return {"message": "An error ocurred trying to create hotel."}, 500
