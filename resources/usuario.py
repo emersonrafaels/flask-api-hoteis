@@ -3,7 +3,7 @@
     UTILIZAÇÃO DO MICROFRAMEWORK FLASK PARA CRIAÇÃO DE UMA API DE HOTÉIS.
     USO DE SQLALCHEMY PARA BANCO DE DADOS E JWT PARA AUTENTICAÇÃO.
 
-    CONTÉM AS FUNÇÕES PARA OS USUÁRIOS:
+    CONTÉM OS RECURSOS DISPONÍVEIS PARA A CLASSE DE USUÁRIOS:
 
     1) GET DE UM USUÁRIO ESPECíFICO
     2) DEL PARA DELETAR UM USUÁRIO.
@@ -22,6 +22,10 @@
         json_response           - Required : Contendo o response da requisição (Json)
 
 """
+
+__version__ = "1.0"
+__author__ = """Emerson V. Rafael (EMERVIN)"""
+__data_atualizacao__ = "16/08/2021"
 
 
 from flask_restful import Resource, reqparse

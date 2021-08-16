@@ -31,6 +31,10 @@
 
 """
 
+__version__ = "1.0"
+__author__ = """Emerson V. Rafael (EMERVIN)"""
+__data_atualizacao__ = "16/08/2021"
+
 
 from inspect import stack
 
